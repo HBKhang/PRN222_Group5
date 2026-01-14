@@ -1,0 +1,54 @@
+﻿<Window x:Class="ChatClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WebSocket Chat"
+        Height="500"
+        Width="380">
+
+    <StackPanel Margin="10">
+
+        <!-- TOP: Name + Connect -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="UserBox"
+                     Width="200"
+                     Margin="0,0,5,0"
+                     ToolTip="Your name"/>
+
+            <Button Content="Connect"
+                    Width="120"
+                    Click="Connect_Click"/>
+        </StackPanel>
+
+        <!-- CHAT AREA -->
+        <ListBox x:Name="ChatList"
+                 Height="300"
+                 FontFamily="Segoe UI Emoji"
+                 Margin="0,0,0,10"/>
+
+        <!-- MESSAGE + EMOJI -->
+        <StackPanel Orientation="Horizontal">
+            <TextBox x:Name="MessageInput"
+                     Width="200"
+                     FontFamily="Segoe UI Emoji"
+                     AcceptsReturn="True"
+                     PreviewKeyDown="MessageInput_PreviewKeyDown"/>
+
+            <ComboBox x:Name="EmojiBox"
+                      Width="60"
+                      Margin="5,0"
+                      SelectionChanged="EmojiBox_SelectionChanged">
+                <ComboBoxItem Content="😀"/>
+                <ComboBoxItem Content="😂"/>
+                <ComboBoxItem Content="❤️"/>
+                <ComboBoxItem Content="👍"/>
+                <ComboBoxItem Content="🎉"/>
+            </ComboBox>
+
+
+            <Button Content="Send"
+                    Width="60"
+                    Click="Send_Click"/>
+        </StackPanel>
+
+    </StackPanel>
+</Window>

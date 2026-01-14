@@ -1,0 +1,14 @@
+D:\ChatSolution\ChatServer\bin\Release\net8.0\ChatServer.exe
+D:\ChatSolution\ChatServer\bin\Release\net8.0\ChatServer.deps.json
+D:\ChatSolution\ChatServer\bin\Release\net8.0\ChatServer.runtimeconfig.json
+D:\ChatSolution\ChatServer\bin\Release\net8.0\ChatServer.dll
+D:\ChatSolution\ChatServer\bin\Release\net8.0\ChatServer.pdb
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.GeneratedMSBuildEditorConfig.editorconfig
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.AssemblyInfoInputs.cache
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.AssemblyInfo.cs
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.csproj.CoreCompileInputs.cache
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.dll
+D:\ChatSolution\ChatServer\obj\Release\net8.0\refint\ChatServer.dll
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.pdb
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ChatServer.genruntimeconfig.cache
+D:\ChatSolution\ChatServer\obj\Release\net8.0\ref\ChatServer.dll
