@@ -4,62 +4,176 @@
         Title="Chat App"
         Height="600"
         Width="500"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="#FFF5F7FA">
 
-    <Grid Margin="10">
+    <Window.Resources>
+        <SolidColorBrush x:Key="BrushWindow" Color="#FFF5F7FA"/>
+        <SolidColorBrush x:Key="BrushSurface" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="BrushBorder" Color="#FFE6EAF0"/>
+        <SolidColorBrush x:Key="BrushText" Color="#FF111827"/>
+        <SolidColorBrush x:Key="BrushSubtle" Color="#FF6B7280"/>
+        <SolidColorBrush x:Key="BrushAccent" Color="#FF2563EB"/>
+        <SolidColorBrush x:Key="BrushAccentHover" Color="#FF1D4ED8"/>
+        <SolidColorBrush x:Key="BrushBubbleOther" Color="#FFF1F5F9"/>
+        <SolidColorBrush x:Key="BrushBubbleMe" Color="#FFDBEAFE"/>
+
+        <DropShadowEffect x:Key="ShadowSoft" Color="#22000000" ShadowDepth="2" BlurRadius="14" Opacity="0.8"/>
+
+        <Style x:Key="TextBoxModern" TargetType="TextBox">
+            <Setter Property="Foreground" Value="{StaticResource BrushText}"/>
+            <Setter Property="Background" Value="{StaticResource BrushSurface}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BrushBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="ButtonModern" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{StaticResource BrushAccent}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="MinWidth" Value="84"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#22000000" ShadowDepth="1" BlurRadius="10" Opacity="0.6"/>
+                            </Border.Effect>
+                            <ContentPresenter Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrushAccentHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.55"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ButtonSecondary" TargetType="Button" BasedOn="{StaticResource ButtonModern}">
+            <Setter Property="Background" Value="#FF334155"/>
+            <Setter Property="MinWidth" Value="84"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
-            <TextBox x:Name="NameBox"
-                     Width="150"
-                     Height="30"
-                     Margin="0,0,10,0"
-                     VerticalContentAlignment="Center"
-                     ToolTip="Enter your name"/>
+        <Border Grid.Row="0" Background="{StaticResource BrushSurface}" CornerRadius="12" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="10" Effect="{StaticResource ShadowSoft}" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <Button Content="Connect"
-                    Width="80"
-                    Height="30"
-                    Margin="0,0,10,0"
-                    Click="Connect_Click"/>
+                <TextBox x:Name="NameBox"
+                         Grid.Column="0"
+                         Style="{StaticResource TextBoxModern}"
+                         MaxLength="24"
+                         ToolTip="Enter your name"/>
 
-            <TextBlock x:Name="StatusText"
-                       VerticalAlignment="Center"
-                       Foreground="Green"
-                       Text="Disconnected"/>
-        </StackPanel>
+                <Button Grid.Column="1"
+                        Content="Connect"
+                        Margin="10,0,0,0"
+                        Style="{StaticResource ButtonModern}"
+                        Click="Connect_Click"/>
 
-        <Border Grid.Row="1"
-                BorderBrush="Gray"
-                BorderThickness="1"
-                CornerRadius="5">
-            <ListBox x:Name="ChatList"
-                     Padding="5"/>
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="2"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource BrushSubtle}"
+                           FontSize="12"
+                           Text="Disconnected"/>
+            </Grid>
         </Border>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,0">
-            <TextBox x:Name="MessageBoxInput"
-                     Height="30"
-                     Width="280"
-                     KeyDown="MessageBoxInput_KeyDown"
-                     Margin="0,0,10,0"
-                     VerticalContentAlignment="Center"/>
+        <Border Grid.Row="1"
+                Background="{StaticResource BrushSurface}"
+                BorderBrush="{StaticResource BrushBorder}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Padding="10"
+                Effect="{StaticResource ShadowSoft}">
+            <Grid>
+                <ListBox x:Name="ChatList"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Padding="0"
+                         HorizontalContentAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="0,2"/>
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <ContentPresenter/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
 
-            <Button Content="Send"
-                    Width="70"
-                    Height="30"
-                    Margin="0,0,10,0"
-                    Click="Send_Click"/>
+                <Border x:Name="TypingIndicator" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="6" Padding="8,4" Background="#CCFFFFFF" CornerRadius="10" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#20000000" ShadowDepth="1" BlurRadius="10" Opacity="0.8"/>
+                    </Border.Effect>
+                    <TextBlock x:Name="TypingText" FontSize="12" Foreground="{StaticResource BrushSubtle}" Text=""/>
+                </Border>
+            </Grid>
+        </Border>
 
-            <Button Content="Upload"
-                    Width="70"
-                    Height="30"
-                    Click="Upload_Click"/>
-        </StackPanel>
+        <Border Grid.Row="2" Background="{StaticResource BrushSurface}" CornerRadius="12" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" Padding="10" Effect="{StaticResource ShadowSoft}" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="MessageBoxInput"
+                         Grid.Column="0"
+                         Style="{StaticResource TextBoxModern}"
+                         TextChanged="MessageBoxInput_TextChanged"
+                         KeyDown="MessageBoxInput_KeyDown"
+                         ToolTip="Type a message and press Enter"/>
+
+                <Button Grid.Column="1"
+                        Content="Send"
+                        Margin="10,0,0,0"
+                        Style="{StaticResource ButtonModern}"
+                        Click="Send_Click"/>
+
+                <Button Grid.Column="2"
+                        Content="Upload"
+                        Margin="10,0,0,0"
+                        Style="{StaticResource ButtonSecondary}"
+                        Click="Upload_Click"/>
+            </Grid>
+        </Border>
 
     </Grid>
 </Window>
