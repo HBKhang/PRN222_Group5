@@ -5,7 +5,7 @@ using System.Text;
 class ClientInfo
 {
     public string Name { get; set; } = "";
-    public WebSocket Socket { get; set; }
+    public WebSocket? Socket { get; set; }
 }
 
 class Program
@@ -14,8 +14,10 @@ class Program
     {
         HttpListener listener = new HttpListener();
 
-        // Listen on all network interfaces
+        listener.Prefixes.Add("http://+:5000/upload/");
         listener.Prefixes.Add("http://+:5000/ws/");
+        listener.Prefixes.Add("http://+:5000/images/");
+
         listener.Start();
 
         Console.WriteLine("WebSocket server started on ws://<ip>:5000/ws/");
@@ -28,7 +30,7 @@ class Program
 
             foreach (var client in clients.ToList())
             {
-                if (client.Socket.State == WebSocketState.Open)
+                if (client.Socket != null && client.Socket.State == WebSocketState.Open)
                 {
                     await client.Socket.SendAsync(
                         data,
@@ -44,6 +46,64 @@ class Program
         {
             HttpListenerContext context = await listener.GetContextAsync();
 
+            //File upload
+            if (context.Request.Url?.AbsolutePath == "/upload/")
+            {
+                string? fileName = context.Request.Headers["File-Name"];
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.Close();
+                    continue;
+                }
+
+                string contentType = context.Request.Headers["Content-Type"] ?? "";
+                bool isImage = contentType.StartsWith("image/");
+
+                string folder = isImage ? "Uploads/Images" : "Uploads/Files";
+                Directory.CreateDirectory(folder);
+
+                string savePath = Path.Combine(folder, fileName);
+
+                using FileStream fs = new FileStream(savePath, FileMode.Create);
+                await context.Request.InputStream.CopyToAsync(fs);
+
+                context.Response.StatusCode = 200;
+                context.Response.Close();
+
+                Console.WriteLine($"Uploaded: {fileName}");
+
+                if (isImage)
+                    await Broadcast($"__IMAGE__:{fileName}");
+                else
+                    await Broadcast($"📁 File uploaded: {fileName}");
+
+                continue;
+            }
+
+            //Image upload
+            if (context.Request.Url?.AbsolutePath.StartsWith("/images/") == true)
+            {
+                string fileName = Path.GetFileName(context.Request.Url.AbsolutePath);
+                string filePath = Path.Combine("Uploads/Images", fileName);
+
+                if (!File.Exists(filePath))
+                {
+                    context.Response.StatusCode = 404;
+                    context.Response.Close();
+                    continue;
+                }
+
+                context.Response.ContentType = "image/*";
+
+                using FileStream fs = File.OpenRead(filePath);
+                await fs.CopyToAsync(context.Response.OutputStream);
+
+                context.Response.Close();
+                continue;
+            }
+
+            //Websocket
             if (!context.Request.IsWebSocketRequest)
             {
                 context.Response.StatusCode = 400;
@@ -106,8 +166,8 @@ class Program
                 {
                     clients.Remove(client);
 
-                    if (!string.IsNullOrEmpty(client.Name))
-                    {
+                    if (!string.IsNullOrEmpty(client.Name)) 
+                    { 
                         await Broadcast($"🔴 {client.Name} disconnected");
                     }
 

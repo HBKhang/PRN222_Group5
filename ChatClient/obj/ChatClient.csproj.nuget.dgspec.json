@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\ChatSolution\\ChatClient\\ChatClient.csproj": {}
+    "D:\\PRN222\\ChatClient\\ChatClient.csproj": {}
   },
   "projects": {
-    "D:\\ChatSolution\\ChatClient\\ChatClient.csproj": {
+    "D:\\PRN222\\ChatClient\\ChatClient.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\ChatSolution\\ChatClient\\ChatClient.csproj",
+        "projectUniqueName": "D:\\PRN222\\ChatClient\\ChatClient.csproj",
         "projectName": "ChatClient",
-        "projectPath": "D:\\ChatSolution\\ChatClient\\ChatClient.csproj",
+        "projectPath": "D:\\PRN222\\ChatClient\\ChatClient.csproj",
         "packagesPath": "C:\\Users\\haiph\\.nuget\\packages\\",
-        "outputPath": "D:\\ChatSolution\\ChatClient\\obj\\",
+        "outputPath": "D:\\PRN222\\ChatClient\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

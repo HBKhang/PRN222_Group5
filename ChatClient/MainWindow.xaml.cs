@@ -1,110 +1,77 @@
-﻿using System.Net.WebSockets;
+﻿using Microsoft.Win32;
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
-namespace ChatClient
-{
+namespace ChatClient{
     public partial class MainWindow : Window
     {
-        ClientWebSocket socket;
+        private ClientWebSocket socket = new ClientWebSocket();
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
+        private string serverIp = "localhost";
         public MainWindow()
         {
             InitializeComponent();
         }
-
-        async void Connect_Click(object sender, RoutedEventArgs e)
+        //Connect
+        private async void Connect_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(UserBox.Text))
-            {
-                MessageBox.Show("Enter your name first");
-                return;
-            }
-
-            socket = new ClientWebSocket();
-
             try
             {
+                if (socket.State == WebSocketState.Open)
+                {
+                    MessageBox.Show("Already connected");
+                    return;
+                }
+
+                socket = new ClientWebSocket();
+
                 await socket.ConnectAsync(
-                    new Uri("ws://26.227.154.122:5000/ws/"), // CHANGE IP
+                    new Uri($"ws://{serverIp}:5000/ws/"),
                     CancellationToken.None
                 );
 
-                ChatList.Items.Add("Connected to server");
-                ReceiveMessages();
-            }
-            catch (WebSocketException)
-            {
-                // Normal disconnect — ignore
+                string name = NameBox.Text.Trim();
+                if (string.IsNullOrEmpty(name))
+                {
+                    MessageBox.Show("Enter a name");
+                    return;
+                }
+
+                await SendRaw($"__JOIN__:{name}");
+
+                _ = ReceiveMessages();
+
+                StatusText.Text = "Connected";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Unexpected error: {ex.Message}");
-            }
-
-        }
-
-        async void ReceiveMessages()
-        {
-            byte[] buffer = new byte[1024];
-
-            while (socket.State == WebSocketState.Open)
-            {
-                var result = await socket.ReceiveAsync(
-                    buffer,
-                    CancellationToken.None
-                );
-
-                string msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
-                Dispatcher.Invoke(() =>
-                {
-                    bool shouldScroll = IsUserAtBottom();
-                    ChatList.Items.Add(msg);
-
-                    if (shouldScroll)
-                        ChatList.ScrollIntoView(ChatList.Items[^1]);
-                });
-
+                MessageBox.Show("Connect failed: " + ex.Message);
             }
         }
-        bool IsUserAtBottom()
+        //Send text
+        private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (ChatList.Items.Count == 0)
-                return true;
-
-            ChatList.UpdateLayout();
-            var border = VisualTreeHelper.GetChild(ChatList, 0) as Decorator;
-            var scroll = border.Child as ScrollViewer;
-
-            return scroll.VerticalOffset >= scroll.ScrollableHeight;
-        }
-
-
-        async void Send_Click(object sender, RoutedEventArgs e)
-        {
-            SendMessage();
-        }
-        private void MessageInput_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter && !Keyboard.IsKeyDown(Key.LeftShift))
-            {
-                e.Handled = true; // STOP newline
-                SendMessage();
-            }
-        }
-        async void SendMessage()
-        {
-            if (socket == null || socket.State != WebSocketState.Open)
+            if (socket.State != WebSocketState.Open)
                 return;
 
-            if (string.IsNullOrWhiteSpace(MessageInput.Text))
+            string msg = MessageBoxInput.Text.Trim();
+            if (string.IsNullOrEmpty(msg))
                 return;
 
-            string message = $"{UserBox.Text}: {MessageInput.Text}";
+            await SendRaw($"{NameBox.Text}: {msg}");
+            MessageBoxInput.Clear();
+        }
+        private async Task SendRaw(string message)
+        {
             byte[] data = Encoding.UTF8.GetBytes(message);
 
             await socket.SendAsync(
@@ -113,51 +80,151 @@ namespace ChatClient
                 true,
                 CancellationToken.None
             );
-
-            MessageInput.Clear();
         }
-        private void EmojiBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        //Receive
+        private async Task ReceiveMessages()
         {
-            if (EmojiBox.SelectedItem is ComboBoxItem item)
+            byte[] buffer = new byte[4096];
+
+            try
             {
-                string emoji = item.Content.ToString();
+                while (socket.State == WebSocketState.Open)
+                {
+                    var result = await socket.ReceiveAsync(
+                        buffer,
+                        CancellationToken.None
+                    );
 
-                int caret = MessageInput.CaretIndex;
-                MessageInput.Text =
-                    MessageInput.Text.Insert(caret, emoji);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                        break;
 
-                MessageInput.CaretIndex = caret + emoji.Length;
-                MessageInput.Focus();
+                    string msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                EmojiBox.SelectedIndex = -1; // reset selection
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (msg.StartsWith("__IMAGE__:"))
+                        {
+                            string fileName = msg.Replace("__IMAGE__:", "");
+
+                            var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.UriSource = new Uri($"http://{serverIp}:5000/images/{fileName}");
+                            bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                            bitmap.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
+                            bitmap.EndInit();
+
+                            Image img = new Image
+                            {
+                                Width = 200,
+                                Margin = new Thickness(5),
+                                Source = bitmap
+                            };
+
+                            ChatList.Items.Add(img);
+                        }
+                        else
+                        {
+                            ChatList.Items.Add(new TextBlock
+                            {
+                                Text = msg,
+                                TextWrapping = TextWrapping.Wrap,
+                                Margin = new Thickness(5)
+                            });
+                        }
+
+                        ChatList.ScrollIntoView(ChatList.Items[^1]);
+                    });
+                }
+            }
+            catch
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    ChatList.Items.Add("⚠ Connection closed");
+                });
             }
         }
+        //Files, images upload
+        private async void Upload_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Multiselect = false;
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            string filePath = dialog.FileName;
+            string fileName = Path.GetFileName(filePath);
+
+            try
+            {
+                using HttpClient client = new HttpClient();
+                using FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+                HttpRequestMessage request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    $"http://{serverIp}:5000/upload/"
+                );
+
+                request.Headers.Add("File-Name", fileName);
+                request.Content = new StreamContent(fs);
+                request.Content.Headers.ContentType =
+                    new System.Net.Http.Headers.MediaTypeHeaderValue(GetContentType(filePath));
+
+                HttpResponseMessage response = await client.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    ChatList.Items.Add($"📤 You uploaded: {fileName}");
+                }
+                else
+                {
+                    MessageBox.Show("Upload failed");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Upload error: " + ex.Message);
+            }
+        }
+        //Content type
+        private string GetContentType(string path)
+        {
+            string ext = Path.GetExtension(path).ToLower();
+
+            return ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                _ => "application/octet-stream"
+            };
+        }
+        //Close
         protected override async void OnClosed(EventArgs e)
         {
-            if (socket != null && socket.State == WebSocketState.Open)
+            try
             {
-                try
+                if (socket.State == WebSocketState.Open)
                 {
-                    if (socket.State == WebSocketState.Open ||
-                        socket.State == WebSocketState.CloseReceived)
-                    {
-                        try
-                        {
-                            await socket.CloseAsync(
-                                WebSocketCloseStatus.NormalClosure,
-                                "Closing",
-                                CancellationToken.None
-                            );
-                        }
-                        catch { }
-                    }
-
+                    await socket.CloseAsync(
+                        WebSocketCloseStatus.NormalClosure,
+                        "Client closing",
+                        CancellationToken.None
+                    );
                 }
-                catch { }
             }
+            catch { }
 
             base.OnClosed(e);
         }
-
+        private void MessageBoxInput_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                Send_Click(sender, e);
+            }
+        }
     }
 }
